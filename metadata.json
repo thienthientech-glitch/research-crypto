@@ -1,0 +1,5 @@
+{
+  "name": "Crypto Project Analyzer",
+  "description": "An application to research and evaluate cryptocurrency projects for investment potential using AI. Users can input project details and receive a structured analysis, which can be exported for use in Google Sheets.",
+  "requestFramePermissions": []
+}
