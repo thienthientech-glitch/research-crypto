@@ -32,14 +32,17 @@ const App: React.FC = () => {
   const [exportStatus, setExportStatus] = useState<string>('');
   
   // State for user-provided Google credentials
+  const [geminiApiKey, setGeminiApiKey] = useState<string>('');
   const [googleApiKey, setGoogleApiKey] = useState<string>('');
   const [googleClientId, setGoogleClientId] = useState<string>('');
 
 
   useEffect(() => {
     // Load credentials from localStorage on initial load
+    const storedGeminiKey = localStorage.getItem('geminiApiKey');
     const storedApiKey = localStorage.getItem('googleApiKey');
     const storedClientId = localStorage.getItem('googleClientId');
+    if (storedGeminiKey) setGeminiApiKey(storedGeminiKey);
     if (storedApiKey) setGoogleApiKey(storedApiKey);
     if (storedClientId) setGoogleClientId(storedClientId);
 
@@ -54,8 +57,8 @@ const App: React.FC = () => {
   }, []);
   
   const handleInitializeGapi = () => {
-    if (!googleApiKey || !googleClientId) {
-      setError("Vui lòng nhập đầy đủ Google API Key và Client ID.");
+    if (!geminiApiKey || !googleApiKey || !googleClientId) {
+      setError("Vui lòng nhập đầy đủ Gemini API Key, Google Sheets API Key và Client ID.");
       return;
     }
     setError(null);
@@ -67,6 +70,7 @@ const App: React.FC = () => {
       scope: SCOPES,
     }).then(() => {
       // Persist credentials on successful initialization
+      localStorage.setItem('geminiApiKey', geminiApiKey);
       localStorage.setItem('googleApiKey', googleApiKey);
       localStorage.setItem('googleClientId', googleClientId);
       
@@ -76,8 +80,9 @@ const App: React.FC = () => {
       setIsSignedIn(authInstance.isSignedIn.get());
     }).catch((err: any) => {
       console.error("Error initializing GAPI client", err);
-      setError("Không thể kết nối. Vui lòng kiểm tra lại API Key và Client ID của bạn.");
+      setError("Không thể kết nối. Vui lòng kiểm tra lại các thông tin xác thực của bạn.");
       // Clear invalid keys from storage
+      localStorage.removeItem('geminiApiKey');
       localStorage.removeItem('googleApiKey');
       localStorage.removeItem('googleClientId');
     });
@@ -114,7 +119,7 @@ const App: React.FC = () => {
     setError(null);
 
     try {
-      const result = await analyzeCryptoProject(projectName, projectUrl);
+      const result = await analyzeCryptoProject(projectName, projectUrl, geminiApiKey);
       setAnalyses(prev => [
         { ...result, id: prev.length + 1, originalName: projectName },
         ...prev
@@ -125,7 +130,7 @@ const App: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [geminiApiKey]);
 
   const handleExportToSheets = async () => {
     if (analyses.length === 0) {
@@ -200,6 +205,8 @@ const App: React.FC = () => {
     if (!isGapiInitialized) {
       return (
         <GoogleApiSetup 
+          geminiApiKey={geminiApiKey}
+          onGeminiApiKeyChange={setGeminiApiKey}
           apiKey={googleApiKey}
           onApiKeyChange={setGoogleApiKey}
           clientId={googleClientId}

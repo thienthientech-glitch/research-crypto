@@ -1,12 +1,5 @@
-
 import { GoogleGenAI, Type } from "@google/genai";
 import type { CryptoProjectAnalysis } from '../types';
-
-if (!process.env.API_KEY) {
-  throw new Error("API_KEY environment variable not set");
-}
-
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
 const analysisSchema = {
   type: Type.OBJECT,
@@ -24,7 +17,13 @@ const analysisSchema = {
   required: ['projectName', 'strengths', 'weaknesses', 'potential', 'risks', 'foundersAndTeam', 'tokenomics', 'technology', 'community']
 };
 
-export const analyzeCryptoProject = async (projectName: string, projectUrl: string): Promise<Omit<CryptoProjectAnalysis, 'id' | 'originalName'>> => {
+export const analyzeCryptoProject = async (projectName: string, projectUrl: string, geminiApiKey: string): Promise<Omit<CryptoProjectAnalysis, 'id' | 'originalName'>> => {
+  if (!geminiApiKey) {
+    throw new Error("Gemini API Key is missing. Please configure it in the setup screen.");
+  }
+  
+  const ai = new GoogleGenAI({ apiKey: geminiApiKey });
+
   try {
     const prompt = `
       Phân tích sâu về dự án tiền điện tử sau đây để đánh giá tiềm năng đầu tư.
